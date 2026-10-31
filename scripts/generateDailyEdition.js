@@ -25,8 +25,8 @@ async function generateDailyEdition() {
     process.exit(1);
   }
 
-  // Se especifica el identificador de modelo válido de la API
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  // Nombre de modelo actualizado según las indicaciones del API
+  const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
   const prompt = `Actúa como Editor en Jefe del diario "1717". Genera la edición diaria completa en JSON estructurado. 
   Debes buscar y sintetizar las noticias más importantes de hoy cruzando múltiples fuentes confiables en los siguientes ejes:
