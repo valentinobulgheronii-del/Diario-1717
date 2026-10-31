@@ -1,0 +1,26 @@
+name: Generar Edición Diaria 1717
+
+on:
+  schedule:
+    - cron: '0 10 * * *' # Ejecuta a las 10:00 UTC (07:00 AM Argentina)
+  workflow_dispatch: # Permite ejecutarlo manualmente cuando quieras
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Instalar dependencias y ejecutar script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          npm init -y
+          npm install @google/generative-ai firebase
+          node scripts/generateDailyEdition.js
