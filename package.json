@@ -1,0 +1,9 @@
+{
+  "name": "diario-1717",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "firebase": "^10.8.0"
+  }
+}
