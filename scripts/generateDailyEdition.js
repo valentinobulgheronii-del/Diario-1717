@@ -13,11 +13,19 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
+const genAI = new GoogleGenerativeAI(apiKey);
 
 async function generateDailyEdition() {
   console.log("Iniciando generación de edición diaria para 1717...");
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+
+  if (!apiKey) {
+    console.error("Error: No se encontró la variable GEMINI_API_KEY.");
+    process.exit(1);
+  }
+
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const prompt = `Actúa como Editor en Jefe del diario "1717". Genera la edición diaria completa en JSON estructurado. 
   Debes buscar y sintetizar las noticias más importantes de hoy cruzando múltiples fuentes confiables en los siguientes ejes:
@@ -35,7 +43,7 @@ async function generateDailyEdition() {
     const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     
-    if (!jsonMatch) throw new Error("No se obtuvo JSON válido.");
+    if (!jsonMatch) throw new Error("No se obtuvo un JSON válido en la respuesta.");
     
     const editionData = JSON.parse(jsonMatch[0]);
     const todayStr = new Date().toISOString().split('T')[0];
@@ -48,7 +56,7 @@ async function generateDailyEdition() {
 
     console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase!`);
   } catch (error) {
-    console.error("Error al generar la edición:", error);
+    console.error("Error detallado al generar la edición:", error);
     process.exit(1);
   }
 }
