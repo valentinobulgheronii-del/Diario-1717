@@ -2,20 +2,20 @@ name: Generar Edición Diaria 1717
 
 on:
   schedule:
-    - cron: '0 10 * * *' # Ejecuta a las 10:00 UTC (07:00 AM Argentina)
-  workflow_dispatch: # Permite ejecutarlo manualmente cuando quieras
+    - cron: '0 10 * * *' # 07:00 AM Argentina
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout del código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Instalar dependencias y ejecutar script
         env:
