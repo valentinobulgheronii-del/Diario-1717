@@ -23,26 +23,26 @@ const CATEGORIES = [
   {
     id: "nacional",
     label: "Política Nacional",
-    sources: "La Política Online (LPO), Cenital, Letra P, La Nación, Clarín, Página/12, Perfil",
-    promptContext: "Política Nacional Argentina, medidas de gobierno, congreso y partidos."
+    sources: "La Política Online (LPO), Cenital, Letra P, La Nación, Clarín, Página/12, Perfil, El Destape",
+    promptContext: "Política Nacional Argentina, medidas de gobierno, rosca parlamentaria, congreso y decisiones del Poder Ejecutivo."
   },
   {
     id: "internacional",
     label: "Política Internacional",
     sources: "Politico, The Economist, Foreign Affairs, Foreign Policy, BBC News, Le Monde, El País",
-    promptContext: "Geopolítica global, conflictos internacionales y diplomacia."
+    promptContext: "Geopolítica global, conflictos internacionales, diplomacia y análisis del Estado de Derecho internacional."
   },
   {
     id: "jurisprudencia",
     label: "Jurisprudencia y Fallos Judiciales",
     sources: "Diario Judicial, Palabras del Derecho, SAIJ, La Ley (Thomson Reuters), Microjuris, El Dial, SCOTUSblog, Lawfare, EJIL:Talk!",
-    promptContext: "Fallos destacados de la CSJN, fueros federales, tribunales supranacionales o debates constitucionales."
+    promptContext: "Fallos jurisprudenciales destacados (CSJN, fueros federales, fuero contencioso administrativo, Corte IDH) y debates constitucionales."
   },
   {
     id: "tecnologia",
     label: "Tecnología e Innovación",
-    sources: "Medios especializados en tecnología, IA, regulaciones digitales y soberanía tecnológica",
-    promptContext: "Innovaciones masivas, regulaciones globales de IA y derecho digital."
+    sources: "Wired, TechCrunch, Arstechnica, regulaciones globales de IA, medios especializados en derecho digital",
+    promptContext: "Regulaciones de IA, soberanía digital, leyes de protección de datos e innovaciones tecnológicas clave."
   }
 ];
 
@@ -52,51 +52,59 @@ async function fetchArticleForCategory(categoryObj, todayStr) {
     tools: [{ googleSearch: {} }]
   });
 
-  const prompt = `Actúa como Editor en Jefe del diario "1717". Investiga la noticia real más relevante ocurrida hoy (${todayStr}) sobre: ${categoryObj.promptContext}.
-Prioriza información cruzada de estas fuentes: ${categoryObj.sources}.
+  const prompt = `Actúa como Editor en Jefe del diario "1717". Tu objetivo es investigar la noticia real más importante acontecida hoy (${todayStr}) sobre: ${categoryObj.promptContext}.
+
+Consulta e integra información cruzada de estas fuentes especializadas: ${categoryObj.sources}.
 
 REQUISITOS OBLIGATORIOS:
-1. 'imageUrl': Extrae la URL directa de la imagen/fotografía periodística REAL publicada por el medio original para ilustrar la nota.
-2. 'fullStory': Redacta un informe EXTREMADAMENTE DETALLADO y extenso (mínimo 800 palabras). Explica antecedentes, hechos, posturas y consecuencias citando las fuentes en el texto.
-3. 'sources': Incluye un array con objetos {"name": "Nombre Medio", "url": "https://url-real-de-la-noticia"}.
+1. 'imageUrl': Extrae la URL directa de la imagen/fotografía periodística REAL publicada por el medio original para ilustrar la cobertura del hecho.
+2. 'fullStory': Redacta un informe analítico y EXTREMADAMENTE DETALLADO (mínimo 700 a 1000 palabras). Explicá en párrafos separados: antecedentes normativos/políticos, cronología del hecho, posturas de los actores implicados y consecuencias a futuro. Cita explícitamente las fuentes dentro del texto (ej: "según reveló Diario Judicial..." o "conforme al análisis de LPO...").
+3. 'sources': Array con objetos de enlaces reales: [{"name": "Nombre del Medio", "url": "https://url-real-de-la-noticia"}].
 
-Devuelve ÚNICAMENTE un objeto JSON válido con este formato:
+Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
 {
   "id": "${categoryObj.id}_01",
   "category": "${categoryObj.id}",
   "categoryLabel": "${categoryObj.label}",
   "title": "Título preciso del hecho real",
-  "subtitle": "Bajada explicativa amplia",
-  "summary": "Resumen de aspectos clave",
+  "subtitle": "Bajada explicativa de fondo",
+  "summary": "Resumen ejecutivo de los puntos clave",
   "imageUrl": "URL_REAL_DE_LA_FOTO_DE_LA_NOTICIA",
-  "imageCaption": "Pie de foto citando medio o fotógrafo",
-  "background": "Antecedentes históricos/normativos",
-  "fullStory": "Texto largo y explicativo citando las fuentes...",
-  "perspectives": "Análisis de partes y posturas en conflicto",
-  "veracityScore": 99,
+  "imageCaption": "Pie de foto citando al medio o fotógrafo original",
+  "background": "Antecedentes e historia previa del conflicto o norma",
+  "fullStory": "Desarrollo extenso citando textualmente las fuentes...",
+  "perspectives": "Posturas cruzadas y debates centrales",
+  "veracityScore": 98,
   "sourcesCount": 2,
   "sources": [{"name": "Nombre Medio", "url": "https://url-real"}],
-  "analysis": "Análisis de fondo",
-  "legalImpact": "Encuadre normativo o legal",
-  "futureProjections": "Próximos pasos",
+  "analysis": "Análisis político o normativo de fondo",
+  "legalImpact": "Encuadre normativo y técnico",
+  "futureProjections": "Qué se espera a continuación",
   "date": "${todayStr}",
   "readTime": "10 min"
 }`;
 
   let attempts = 0;
-  while (attempts < 3) {
+  const maxAttempts = 3;
+
+  while (attempts < maxAttempts) {
     try {
       attempts++;
-      console.log(`Generando noticia para categoría: ${categoryObj.id} (Intento ${attempts})...`);
+      console.log(`[${categoryObj.id.toUpperCase()}] Consultando Gemini + Search (Intento ${attempts})...`);
+      
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
     } catch (err) {
-      console.warn(`Error en categoría ${categoryObj.id}:`, err.message || err);
-      if (attempts < 3) await sleep(15000);
+      console.warn(`[${categoryObj.id.toUpperCase()}] Error en intento ${attempts}:`, err.message || err);
+      if (attempts < maxAttempts) {
+        console.log(`Pausa de 30 segundos para liberar la cuota de la API...`);
+        await sleep(30000);
+      }
     }
   }
   return null;
@@ -104,7 +112,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con este formato:
 
 async function generateDailyEdition() {
   const todayStr = new Date().toISOString().split('T')[0];
-  console.log(`Iniciando generación secuencial por categorías para 1717 (${todayStr})...`);
+  console.log(`=== Iniciando compilación diaria para 1717 (${todayStr}) ===`);
 
   if (!apiKey) {
     console.error("Error: No se encontró la variable GEMINI_API_KEY.");
@@ -117,14 +125,18 @@ async function generateDailyEdition() {
     const article = await fetchArticleForCategory(cat, todayStr);
     if (article) {
       compiledArticles.push(article);
+      console.log(`-> Categoría '${cat.id}' completada exitosamente.`);
+    } else {
+      console.warn(`-> No se pudo obtener la noticia para '${cat.id}'.`);
     }
-    // Pausa de 12 segundos entre llamadas para respetar estrictamente los límites por minuto
-    console.log(`Pausa táctica de 12 segundos para respetar límites de cuota...`);
-    await sleep(12000);
+
+    // Pausa de 20 segundos entre cada categoría para evitar golpear el límite RPM/TPM de Google Search Grounding
+    console.log(`Pausa táctica de 20 segundos entre llamadas API...`);
+    await sleep(20000);
   }
 
   if (compiledArticles.length === 0) {
-    console.error("No se pudo generar ninguna noticia.");
+    console.error("No se pudo compilar ninguna categoría.");
     process.exit(1);
   }
 
@@ -134,7 +146,7 @@ async function generateDailyEdition() {
     articles: compiledArticles
   });
 
-  console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase con ${compiledArticles.length} categorías completas!`);
+  console.log(`¡Edición del día (${todayStr}) sincronizada exitosamente en Firebase con ${compiledArticles.length} categorías!`);
 }
 
 generateDailyEdition();
