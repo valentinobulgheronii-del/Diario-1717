@@ -28,33 +28,25 @@ const DEFAULT_IMAGES = {
 
 async function generateDailyEdition() {
   const todayStr = new Date().toISOString().split('T')[0];
-  console.log(`Iniciando generación del resumen informativo para 1717 (${todayStr})...`);
+  console.log(`Iniciando generación para 1717 (${todayStr})...`);
 
   if (!apiKey) {
     console.error("Error: No se encontró la variable GEMINI_API_KEY.");
     process.exit(1);
   }
 
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-3.8-flash",
-    tools: [{ googleSearch: {} }]
-  });
+  const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
-  const prompt = `Actúa como Editor en Jefe del diario "1717". Tu tarea es compilar las principales noticias acontecidas hoy (${todayStr}), cruzando datos de fuentes periodísticas y jurídicas especializadas.
+  const prompt = `Actúa como Editor en Jefe del diario "1717". Genera la edición del día (${todayStr}) cruzando información de fuentes periodísticas y jurídicas especializadas (La Ley, SAIJ, Diario Judicial, Palabras del Derecho, LPO, Cenital, Letra P, La Nación, Clarín, Politico, Lawfare, etc.).
 
-Debes buscar activamente información en las siguientes fuentes de referencia según el eje:
-- JURISPRUDENCIA Y DERECHO: Diario Judicial, Palabras del Derecho, SAIJ, La Ley (Thomson Reuters), Microjuris, El Dial, La Nación (Sección Judiciales), SCOTUSblog, Verfassungsblog, Lawfare, EJIL:Talk!.
-- POLÍTICA NACIONAL: La Política Online (LPO), Cenital, Letra P, Clarín, La Nación, Página/12, Perfil, El Destape.
-- POLÍTICA INTERNACIONAL Y GEOPOLÍTICA: Politico, The Economist, Foreign Affairs, Foreign Policy, BBC News, Le Monde, El País, World Justice Project.
-- TECNOLOGÍA Y REGULACIÓN: Cobertura especializada sobre IA, derecho digital y gobernanza tecnológica.
+Debes generar exactamente 4 artículos extensos (uno por cada eje obligatorio: 'nacional', 'internacional', 'jurisprudencia', 'tecnologia').
 
-REQUISITOS MANDATORIOS:
-1. Genera exactamente 4 artículos extensos (uno por eje obligatorio: 'nacional', 'internacional', 'jurisprudencia', 'tecnologia').
-2. 'fullStory': Desarrollo periodístico de fondo (mínimo 600 a 1000 palabras por nota), con citas explícitas a los medios o fallos consultados en el texto (ej. "según reveló Diario Judicial..." o "conforme al análisis de Cenital...").
-3. 'sources': Array con los enlaces exactos y reales hacia la notaPeriodística o fallo oficial consultado: [{"name": "Diario Judicial", "url": "https://www.diariojudicial.com/..."}, {"name": "La Nación", "url": "https://..."}].
-4. 'imageUrl': Extrae la URL de la imagen fotográfica real vinculada a la noticia o reporte del medio original.
+REQUISITOS:
+1. 'fullStory': Desarrollo profundo (mínimo 600 palabras) citando las fuentes especializadas en el texto.
+2. 'sources': Array de fuentes reales con su URL: [{"name": "Diario Judicial", "url": "https://www.diariojudicial.com/..."}].
+3. 'imageUrl': URL de imagen temática representativa de alta calidad.
 
-Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exactas:
+Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura:
 {
   "articles": [
     {
@@ -62,21 +54,19 @@ Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exactas:
       "category": "nacional",
       "categoryLabel": "Política Nacional",
       "title": "Título real de la noticia principal",
-      "subtitle": "Bajada descriptiva de la noticia",
-      "summary": "Resumen ejecutivo con los puntos clave",
-      "imageUrl": "https://url-de-la-imagen-real-de-la-noticia",
-      "imageCaption": "Pie de foto indicando fuente o contexto",
-      "background": "Antecedentes y contexto institucional",
-      "fullStory": "Desarrollo profundo citando textualmente las fuentes consultadas...",
-      "perspectives": "Análisis de las partes involucradas",
+      "subtitle": "Bajada descriptiva",
+      "summary": "Resumen ejecutivo",
+      "imageUrl": "https://images.unsplash.com/...",
+      "imageCaption": "Pie de foto descriptivo",
+      "background": "Contexto e historia",
+      "fullStory": "Desarrollo completo citando las fuentes...",
+      "perspectives": "Posturas en debate",
       "veracityScore": 98,
       "sourcesCount": 3,
-      "sources": [
-        {"name": "La Política Online", "url": "https://www.lapoliticaonline.com/..."}
-      ],
-      "analysis": "Análisis político o constitucional",
-      "legalImpact": "Encuadre normativo y técnico",
-      "futureProjections": "Próximos pasos institucionales",
+      "sources": [{"name": "La Política Online", "url": "https://www.lapoliticaonline.com/..."}],
+      "analysis": "Análisis político o jurídico",
+      "legalImpact": "Encuadre normativo",
+      "futureProjections": "Proyecciones a futuro",
       "date": "${todayStr}",
       "readTime": "8 min"
     },
@@ -114,7 +104,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exactas:
       const responseText = result.response.text();
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       
-      if (!jsonMatch) throw new Error("No se obtuvo un objeto JSON válido en la respuesta.");
+      if (!jsonMatch) throw new Error("No se obtuvo un objeto JSON válido.");
       
       const editionData = JSON.parse(jsonMatch[0]);
 
@@ -131,13 +121,13 @@ Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exactas:
         articles: cleanedArticles
       });
 
-      console.log(`¡Edición del día (${todayStr}) sincronizada con éxito en Firebase!`);
+      console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase!`);
       success = true;
     } catch (error) {
-      console.warn(`Error durante la generación (intento ${attempts}):`, error.message || error);
+      console.warn(`Error en intento ${attempts}:`, error.message || error);
       if (attempts < maxAttempts) {
-        console.log("Reintentando en 10 segundos...");
-        await sleep(10000);
+        console.log("Esperando 35 segundos para liberar la cuota de la API...");
+        await sleep(35000);
       } else {
         console.error("No se pudo completar la generación diaria tras múltiples intentos.");
         process.exit(1);
