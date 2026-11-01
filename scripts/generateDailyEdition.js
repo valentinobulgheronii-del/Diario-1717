@@ -18,28 +18,26 @@ const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : 
 const genAI = new GoogleGenerativeAI(apiKey);
 
 async function generateDailyEdition() {
-  console.log("Iniciando generación de edición diaria exhaustiva para 1717...");
+  console.log("Iniciando generación de edición diaria para 1717...");
 
   if (!apiKey) {
     console.error("Error: No se encontró la variable GEMINI_API_KEY.");
     process.exit(1);
   }
 
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-3.8-flash",
-    tools: [{ googleSearch: {} }] 
-  });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  const prompt = `Actúa como Editor en Jefe del diario privado "1717". Tu objetivo es investigar noticias reales del día de hoy y redactar un informe exhaustivo de fondo para 4 ejes:
-  1. 'nacional': Política Nacional Argentina (medidas de gobierno, congreso, partidos).
-  2. 'internacional': Política Internacional y geopolítica con impacto en Argentina o el mundo.
-  3. 'jurisprudencia': Fallos judiciales destacados (CSJN, fuero contencioso/civil/penal, Corte IDH, etc.).
-  4. 'tecnologia': Innovaciones masivas, regulaciones de IA y soberanía digital.
+  const prompt = `Actúa como Editor en Jefe del diario "1717". Genera la edición diaria completa en JSON estructurado.
+  Investiga noticias reales de hoy para las siguientes 4 categorías:
+  1. 'nacional': Política Nacional Argentina.
+  2. 'internacional': Política Internacional y geopolítica.
+  3. 'jurisprudencia': Fallos judiciales destacados (CSJN, fuero civil/comercial/penal, Corte IDH, etc.).
+  4. 'tecnologia': Innovaciones y regulaciones de IA.
 
   REQUISITOS OBLIGATORIOS:
-  - fullStory DEBE ser un texto largo, analítico y súper desarrollado (mínimo 600 a 1000 palabras por noticia) detallando antecedentes, hechos cronológicos, posturas y debate.
-  - Para cada noticia DEBES incluir las URLs directas y reales a los artículos periodísticos o fallos judiciales consultados en la propiedad "sources" (array de objetos con "name" y "url" real).
-  - imageUrl: Incluye una imagen válida temática de alta resolución (preferentemente de Unsplash o directamente vinculada a la temática).
+  - 'fullStory': Desarrollo extenso y completo de la noticia (mínimo 500 palabras por artículo).
+  - 'sources': Lista de objetos {"name": "Nombre medio/fuente", "url": "https://url-real-de-la-noticia"}.
+  - 'imageUrl': Imagen representativa temática de alta resolución.
 
   Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
   {
@@ -58,14 +56,12 @@ async function generateDailyEdition() {
         "perspectives": "string",
         "veracityScore": 98,
         "sourcesCount": 4,
-        "sources": [
-          {"name": "Nombre de la fuente (ej: Infobae / CIJ)", "url": "https://url-real-de-la-noticia"}
-        ],
+        "sources": [{"name": "string", "url": "string"}],
         "analysis": "string",
         "legalImpact": "string",
         "futureProjections": "string",
-        "date": "Fecha actual",
-        "readTime": "12 min"
+        "date": "Fecha de hoy",
+        "readTime": "8 min"
       }
     ]
   }`;
@@ -86,7 +82,7 @@ async function generateDailyEdition() {
       articles: editionData.articles
     });
 
-    console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase con notas extensas y fuentes reales!`);
+    console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase!`);
   } catch (error) {
     console.error("Error al generar la edición:", error);
     process.exit(1);
