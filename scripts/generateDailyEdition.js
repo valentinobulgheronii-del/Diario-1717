@@ -19,56 +19,59 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const DEFAULT_IMAGES = {
-  nacional: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80",
-  internacional: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80",
-  jurisprudencia: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80",
-  tecnologia: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80"
-};
-
 async function generateDailyEdition() {
   const todayStr = new Date().toISOString().split('T')[0];
-  console.log(`Iniciando generación para 1717 (${todayStr})...`);
+  console.log(`Iniciando generación con búsqueda en tiempo real para 1717 (${todayStr})...`);
 
   if (!apiKey) {
     console.error("Error: No se encontró la variable GEMINI_API_KEY.");
     process.exit(1);
   }
 
-  const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
+  // Activar la herramienta de búsqueda para obtener fotos y datos reales
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-3.8-flash",
+    tools: [{ googleSearch: {} }]
+  });
 
-  const prompt = `Actúa como Editor en Jefe del diario "1717". Genera la edición del día (${todayStr}) cruzando información de fuentes periodísticas y jurídicas especializadas (La Ley, SAIJ, Diario Judicial, Palabras del Derecho, LPO, Cenital, Letra P, La Nación, Clarín, Politico, Lawfare, etc.).
+  const prompt = `Actúa como Editor en Jefe del diario "1717". Tu objetivo es investigar las noticias reales más importantes acontecidas hoy (${todayStr}) cruzando información de medios especializados (La Ley, SAIJ, Diario Judicial, Palabras del Derecho, LPO, Cenital, Letra P, La Nación, Clarín, Politico, Lawfare, etc.).
 
-Debes generar exactamente 4 artículos extensos (uno por cada eje obligatorio: 'nacional', 'internacional', 'jurisprudencia', 'tecnologia').
+Genera obligatoriamente 4 informes de investigación profunda (uno por cada categoría: 'nacional', 'internacional', 'jurisprudencia', 'tecnologia').
 
-REQUISITOS:
-1. 'fullStory': Desarrollo profundo (mínimo 600 palabras) citando las fuentes especializadas en el texto.
-2. 'sources': Array de fuentes reales con su URL: [{"name": "Diario Judicial", "url": "https://www.diariojudicial.com/..."}].
-3. 'imageUrl': URL de imagen temática representativa de alta calidad.
+REQUISITOS ESTRICTOS DE EXTENSIÓN E IMÁGENES REALES:
+1. 'imageUrl': DEBES buscar y extraer la URL directa de la imagen/fotografía periodística REAL publicada por el medio original para ilustrar la nota. No uses imágenes estáticas ni genéricas.
+2. 'fullStory': Redacta un informe EXTREMADAMENTE DETALLADO y extenso (mínimo 800 a 1200 palabras por noticia). Debe explicar:
+   - Antecedentes históricos y normativos.
+   - Cronología de los hechos recientes.
+   - Posturas cruzadas de los actores principales.
+   - Consecuencias legales, políticas o tecnológicas de largo plazo.
+3. 'sources': Incluye los links directos y reales a las notas periodísticas o fallos judiciales de donde extrajiste la información.
 
-Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura:
+Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura:
 {
   "articles": [
     {
       "id": "nac_01",
       "category": "nacional",
       "categoryLabel": "Política Nacional",
-      "title": "Título real de la noticia principal",
-      "subtitle": "Bajada descriptiva",
-      "summary": "Resumen ejecutivo",
-      "imageUrl": "https://images.unsplash.com/...",
-      "imageCaption": "Pie de foto descriptivo",
-      "background": "Contexto e historia",
-      "fullStory": "Desarrollo completo citando las fuentes...",
-      "perspectives": "Posturas en debate",
-      "veracityScore": 98,
+      "title": "Título preciso y real del hecho",
+      "subtitle": "Bajada explicativa amplia",
+      "summary": "Resumen de los aspectos clave",
+      "imageUrl": "URL_REAL_DE_LA_FOTO_DE_LA_NOTICIA",
+      "imageCaption": "Pie de foto citando al fotógrafo o medio original",
+      "background": "Explicación detallada del contexto previo...",
+      "fullStory": "Texto sumamente extenso y explicativo desarrollado a fondo...",
+      "perspectives": "Análisis de las distintas partes y posturas en conflicto...",
+      "veracityScore": 99,
       "sourcesCount": 3,
-      "sources": [{"name": "La Política Online", "url": "https://www.lapoliticaonline.com/..."}],
-      "analysis": "Análisis político o jurídico",
-      "legalImpact": "Encuadre normativo",
-      "futureProjections": "Proyecciones a futuro",
+      "sources": [
+        {"name": "Nombre del Medio", "url": "https://url-real-de-la-noticia"}
+      ],
+      "analysis": "Análisis técnico-político de fondo",
+      "legalImpact": "Impacto regulatorio, legal o constitucional",
+      "futureProjections": "Proyecciones a futuro del escenario",
       "date": "${todayStr}",
-      "readTime": "8 min"
+      "readTime": "12 min"
     },
     {
       "id": "int_01",
@@ -98,7 +101,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura:
   while (attempts < maxAttempts && !success) {
     try {
       attempts++;
-      console.log(`Buscando noticias y compilando edición (Intento ${attempts} de ${maxAttempts})...`);
+      console.log(`Buscando imágenes y redactando notas de fondo (Intento ${attempts} de ${maxAttempts})...`);
       
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
@@ -108,28 +111,21 @@ Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura:
       
       const editionData = JSON.parse(jsonMatch[0]);
 
-      const cleanedArticles = editionData.articles.map((art) => ({
-        ...art,
-        imageUrl: art.imageUrl && art.imageUrl.startsWith('http') 
-          ? art.imageUrl 
-          : DEFAULT_IMAGES[art.category] || DEFAULT_IMAGES.nacional
-      }));
-
       await setDoc(doc(db, "editions", todayStr), {
         date: todayStr,
         created_at: new Date().toISOString(),
-        articles: cleanedArticles
+        articles: editionData.articles
       });
 
-      console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase!`);
+      console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase con imágenes reales y notas explicativas!`);
       success = true;
     } catch (error) {
       console.warn(`Error en intento ${attempts}:`, error.message || error);
       if (attempts < maxAttempts) {
-        console.log("Esperando 35 segundos para liberar la cuota de la API...");
-        await sleep(35000);
+        console.log("Esperando 40 segundos para liberar la cuota de búsqueda de la API...");
+        await sleep(40000);
       } else {
-        console.error("No se pudo completar la generación diaria tras múltiples intentos.");
+        console.error("No se pudo completar la generación tras múltiples intentos.");
         process.exit(1);
       }
     }
