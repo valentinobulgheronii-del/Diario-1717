@@ -19,54 +19,87 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const DEFAULT_IMAGES = {
+  nacional: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80",
+  internacional: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80",
+  jurisprudencia: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80",
+  tecnologia: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80"
+};
+
 async function generateDailyEdition() {
-  console.log("Iniciando generación de edición diaria para 1717...");
+  const todayStr = new Date().toISOString().split('T')[0];
+  console.log(`Iniciando generación del resumen informativo para 1717 (${todayStr})...`);
 
   if (!apiKey) {
     console.error("Error: No se encontró la variable GEMINI_API_KEY.");
     process.exit(1);
   }
 
-  const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-3.8-flash",
+    tools: [{ googleSearch: {} }]
+  });
 
-  const prompt = `Actúa como Editor en Jefe del diario "1717". Genera la edición diaria completa en JSON estructurado.
-  Investiga noticias reales de hoy para las siguientes 4 categorías:
-  1. 'nacional': Política Nacional Argentina.
-  2. 'internacional': Política Internacional y geopolítica.
-  3. 'jurisprudencia': Fallos judiciales destacados (CSJN, fuero civil/comercial/penal, Corte IDH, etc.).
-  4. 'tecnologia': Innovaciones y regulaciones de IA.
+  const prompt = `Actúa como Editor en Jefe del diario "1717". Tu tarea es compilar las principales noticias acontecidas hoy (${todayStr}), cruzando datos de fuentes periodísticas y jurídicas especializadas.
 
-  REQUISITOS OBLIGATORIOS:
-  - 'fullStory': Desarrollo extenso y completo de la noticia (mínimo 500 palabras por artículo).
-  - 'sources': Lista de objetos {"name": "Nombre medio/fuente", "url": "https://url-real-de-la-noticia"}.
-  - 'imageUrl': Imagen representativa temática de alta resolución.
+Debes buscar activamente información en las siguientes fuentes de referencia según el eje:
+- JURISPRUDENCIA Y DERECHO: Diario Judicial, Palabras del Derecho, SAIJ, La Ley (Thomson Reuters), Microjuris, El Dial, La Nación (Sección Judiciales), SCOTUSblog, Verfassungsblog, Lawfare, EJIL:Talk!.
+- POLÍTICA NACIONAL: La Política Online (LPO), Cenital, Letra P, Clarín, La Nación, Página/12, Perfil, El Destape.
+- POLÍTICA INTERNACIONAL Y GEOPOLÍTICA: Politico, The Economist, Foreign Affairs, Foreign Policy, BBC News, Le Monde, El País, World Justice Project.
+- TECNOLOGÍA Y REGULACIÓN: Cobertura especializada sobre IA, derecho digital y gobernanza tecnológica.
 
-  Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura:
-  {
-    "articles": [
-      {
-        "id": "string",
-        "category": "nacional|internacional|jurisprudencia|tecnologia",
-        "categoryLabel": "string",
-        "title": "string",
-        "subtitle": "string",
-        "summary": "string",
-        "imageUrl": "string",
-        "imageCaption": "string",
-        "background": "string",
-        "fullStory": "string",
-        "perspectives": "string",
-        "veracityScore": 98,
-        "sourcesCount": 4,
-        "sources": [{"name": "string", "url": "string"}],
-        "analysis": "string",
-        "legalImpact": "string",
-        "futureProjections": "string",
-        "date": "Fecha de hoy",
-        "readTime": "8 min"
-      }
-    ]
-  }`;
+REQUISITOS MANDATORIOS:
+1. Genera exactamente 4 artículos extensos (uno por eje obligatorio: 'nacional', 'internacional', 'jurisprudencia', 'tecnologia').
+2. 'fullStory': Desarrollo periodístico de fondo (mínimo 600 a 1000 palabras por nota), con citas explícitas a los medios o fallos consultados en el texto (ej. "según reveló Diario Judicial..." o "conforme al análisis de Cenital...").
+3. 'sources': Array con los enlaces exactos y reales hacia la notaPeriodística o fallo oficial consultado: [{"name": "Diario Judicial", "url": "https://www.diariojudicial.com/..."}, {"name": "La Nación", "url": "https://..."}].
+4. 'imageUrl': Extrae la URL de la imagen fotográfica real vinculada a la noticia o reporte del medio original.
+
+Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exactas:
+{
+  "articles": [
+    {
+      "id": "nac_01",
+      "category": "nacional",
+      "categoryLabel": "Política Nacional",
+      "title": "Título real de la noticia principal",
+      "subtitle": "Bajada descriptiva de la noticia",
+      "summary": "Resumen ejecutivo con los puntos clave",
+      "imageUrl": "https://url-de-la-imagen-real-de-la-noticia",
+      "imageCaption": "Pie de foto indicando fuente o contexto",
+      "background": "Antecedentes y contexto institucional",
+      "fullStory": "Desarrollo profundo citando textualmente las fuentes consultadas...",
+      "perspectives": "Análisis de las partes involucradas",
+      "veracityScore": 98,
+      "sourcesCount": 3,
+      "sources": [
+        {"name": "La Política Online", "url": "https://www.lapoliticaonline.com/..."}
+      ],
+      "analysis": "Análisis político o constitucional",
+      "legalImpact": "Encuadre normativo y técnico",
+      "futureProjections": "Próximos pasos institucionales",
+      "date": "${todayStr}",
+      "readTime": "8 min"
+    },
+    {
+      "id": "int_01",
+      "category": "internacional",
+      "categoryLabel": "Política Internacional",
+      ...
+    },
+    {
+      "id": "jur_01",
+      "category": "jurisprudencia",
+      "categoryLabel": "Jurisprudencia y Fallos Judiciales",
+      ...
+    },
+    {
+      "id": "tec_01",
+      "category": "tecnologia",
+      "categoryLabel": "Tecnología e Innovación",
+      ...
+    }
+  ]
+}`;
 
   let attempts = 0;
   const maxAttempts = 3;
@@ -75,32 +108,38 @@ async function generateDailyEdition() {
   while (attempts < maxAttempts && !success) {
     try {
       attempts++;
-      console.log(`Intento ${attempts} de ${maxAttempts}...`);
+      console.log(`Buscando noticias y compilando edición (Intento ${attempts} de ${maxAttempts})...`);
       
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       
-      if (!jsonMatch) throw new Error("No se obtuvo un JSON válido en la respuesta.");
+      if (!jsonMatch) throw new Error("No se obtuvo un objeto JSON válido en la respuesta.");
       
       const editionData = JSON.parse(jsonMatch[0]);
-      const todayStr = new Date().toISOString().split('T')[0];
+
+      const cleanedArticles = editionData.articles.map((art) => ({
+        ...art,
+        imageUrl: art.imageUrl && art.imageUrl.startsWith('http') 
+          ? art.imageUrl 
+          : DEFAULT_IMAGES[art.category] || DEFAULT_IMAGES.nacional
+      }));
 
       await setDoc(doc(db, "editions", todayStr), {
         date: todayStr,
         created_at: new Date().toISOString(),
-        articles: editionData.articles
+        articles: cleanedArticles
       });
 
-      console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase!`);
+      console.log(`¡Edición del día (${todayStr}) sincronizada con éxito en Firebase!`);
       success = true;
     } catch (error) {
-      console.warn(`Error en el intento ${attempts}:`, error.message || error);
+      console.warn(`Error durante la generación (intento ${attempts}):`, error.message || error);
       if (attempts < maxAttempts) {
-        console.log("Reintentando en 10 segundos debido a alta demanda de la API...");
+        console.log("Reintentando en 10 segundos...");
         await sleep(10000);
       } else {
-        console.error("Se alcanzaron el número máximo de intentos. Abortando.");
+        console.error("No se pudo completar la generación diaria tras múltiples intentos.");
         process.exit(1);
       }
     }
