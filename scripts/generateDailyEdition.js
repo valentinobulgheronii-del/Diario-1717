@@ -18,26 +18,57 @@ const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : 
 const genAI = new GoogleGenerativeAI(apiKey);
 
 async function generateDailyEdition() {
-  console.log("Iniciando generación de edición diaria para 1717...");
+  console.log("Iniciando generación de edición diaria exhaustiva para 1717...");
 
   if (!apiKey) {
     console.error("Error: No se encontró la variable GEMINI_API_KEY.");
     process.exit(1);
   }
 
-  // Nombre de modelo actualizado según las indicaciones del API
-  const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-3.8-flash",
+    tools: [{ googleSearch: {} }] 
+  });
 
-  const prompt = `Actúa como Editor en Jefe del diario "1717". Genera la edición diaria completa en JSON estructurado. 
-  Debes buscar y sintetizar las noticias más importantes de hoy cruzando múltiples fuentes confiables en los siguientes ejes:
-  1. Política Nacional Argentina (Oficialismo y Oposición).
-  2. Política Internacional (Relaciones exteriores de Argentina y Geopolítica mundial).
-  3. Jurisprudencia y Fallos Judiciales (CSJN, cortes nacionales destacadas, Corte IDH, CIJ, etc.).
-  4. Tecnología e Innovación.
+  const prompt = `Actúa como Editor en Jefe del diario privado "1717". Tu objetivo es investigar noticias reales del día de hoy y redactar un informe exhaustivo de fondo para 4 ejes:
+  1. 'nacional': Política Nacional Argentina (medidas de gobierno, congreso, partidos).
+  2. 'internacional': Política Internacional y geopolítica con impacto en Argentina o el mundo.
+  3. 'jurisprudencia': Fallos judiciales destacados (CSJN, fuero contencioso/civil/penal, Corte IDH, etc.).
+  4. 'tecnologia': Innovaciones masivas, regulaciones de IA y soberanía digital.
 
-  Cada noticia debe incluir: id, category, categoryLabel, title, subtitle, summary, imageUrl, imageCaption, background, fullStory, perspectives, veracityScore, sourcesCount, sources, analysis, legalImpact, futureProjections, readTime.
-  
-  Responde ÚNICAMENTE con un objeto JSON con la propiedad "articles" (array de artículos).`;
+  REQUISITOS OBLIGATORIOS:
+  - fullStory DEBE ser un texto largo, analítico y súper desarrollado (mínimo 600 a 1000 palabras por noticia) detallando antecedentes, hechos cronológicos, posturas y debate.
+  - Para cada noticia DEBES incluir las URLs directas y reales a los artículos periodísticos o fallos judiciales consultados en la propiedad "sources" (array de objetos con "name" y "url" real).
+  - imageUrl: Incluye una imagen válida temática de alta resolución (preferentemente de Unsplash o directamente vinculada a la temática).
+
+  Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
+  {
+    "articles": [
+      {
+        "id": "string",
+        "category": "nacional|internacional|jurisprudencia|tecnologia",
+        "categoryLabel": "string",
+        "title": "string",
+        "subtitle": "string",
+        "summary": "string",
+        "imageUrl": "string",
+        "imageCaption": "string",
+        "background": "string",
+        "fullStory": "string",
+        "perspectives": "string",
+        "veracityScore": 98,
+        "sourcesCount": 4,
+        "sources": [
+          {"name": "Nombre de la fuente (ej: Infobae / CIJ)", "url": "https://url-real-de-la-noticia"}
+        ],
+        "analysis": "string",
+        "legalImpact": "string",
+        "futureProjections": "string",
+        "date": "Fecha actual",
+        "readTime": "12 min"
+      }
+    ]
+  }`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -55,9 +86,9 @@ async function generateDailyEdition() {
       articles: editionData.articles
     });
 
-    console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase!`);
+    console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase con notas extensas y fuentes reales!`);
   } catch (error) {
-    console.error("Error detallado al generar la edición:", error);
+    console.error("Error al generar la edición:", error);
     process.exit(1);
   }
 }
