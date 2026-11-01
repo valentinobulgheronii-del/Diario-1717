@@ -17,6 +17,9 @@ const db = getFirestore(app);
 const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
+// Función auxiliar para esperar unos segundos si la API está ocupada
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function generateDailyEdition() {
   console.log("Iniciando generación de edición diaria para 1717...");
 
@@ -25,7 +28,11 @@ async function generateDailyEdition() {
     process.exit(1);
   }
 
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  // Esperar 5 segundos previos para limpiar cuotas por minuto anteriores
+  await sleep(5000);
+
+  // Usar el identificador oficial de modelo válido
+  const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
   const prompt = `Actúa como Editor en Jefe del diario "1717". Genera la edición diaria completa en JSON estructurado.
   Investiga noticias reales de hoy para las siguientes 4 categorías:
@@ -39,7 +46,7 @@ async function generateDailyEdition() {
   - 'sources': Lista de objetos {"name": "Nombre medio/fuente", "url": "https://url-real-de-la-noticia"}.
   - 'imageUrl': Imagen representativa temática de alta resolución.
 
-  Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
+  Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura:
   {
     "articles": [
       {
