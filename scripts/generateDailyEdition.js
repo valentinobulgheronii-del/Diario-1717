@@ -17,7 +17,6 @@ const db = getFirestore(app);
 const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// Función auxiliar para esperar unos segundos si la API está ocupada
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function generateDailyEdition() {
@@ -28,10 +27,6 @@ async function generateDailyEdition() {
     process.exit(1);
   }
 
-  // Esperar 5 segundos previos para limpiar cuotas por minuto anteriores
-  await sleep(5000);
-
-  // Usar el identificador oficial de modelo válido
   const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
   const prompt = `Actúa como Editor en Jefe del diario "1717". Genera la edición diaria completa en JSON estructurado.
@@ -73,26 +68,42 @@ async function generateDailyEdition() {
     ]
   }`;
 
-  try {
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error("No se obtuvo un JSON válido en la respuesta.");
-    
-    const editionData = JSON.parse(jsonMatch[0]);
-    const todayStr = new Date().toISOString().split('T')[0];
+  let attempts = 0;
+  const maxAttempts = 3;
+  let success = false;
 
-    await setDoc(doc(db, "editions", todayStr), {
-      date: todayStr,
-      created_at: new Date().toISOString(),
-      articles: editionData.articles
-    });
+  while (attempts < maxAttempts && !success) {
+    try {
+      attempts++;
+      console.log(`Intento ${attempts} de ${maxAttempts}...`);
+      
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) throw new Error("No se obtuvo un JSON válido en la respuesta.");
+      
+      const editionData = JSON.parse(jsonMatch[0]);
+      const todayStr = new Date().toISOString().split('T')[0];
 
-    console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase!`);
-  } catch (error) {
-    console.error("Error al generar la edición:", error);
-    process.exit(1);
+      await setDoc(doc(db, "editions", todayStr), {
+        date: todayStr,
+        created_at: new Date().toISOString(),
+        articles: editionData.articles
+      });
+
+      console.log(`¡Edición del día (${todayStr}) guardada exitosamente en Firebase!`);
+      success = true;
+    } catch (error) {
+      console.warn(`Error en el intento ${attempts}:`, error.message || error);
+      if (attempts < maxAttempts) {
+        console.log("Reintentando en 10 segundos debido a alta demanda de la API...");
+        await sleep(10000);
+      } else {
+        console.error("Se alcanzaron el número máximo de intentos. Abortando.");
+        process.exit(1);
+      }
+    }
   }
 }
 
