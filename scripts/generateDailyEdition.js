@@ -1,6 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, setDoc } = require('firebase/firestore');
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBFkiCIVm7dkP50HNgHgBul3zWGQDRs_4I",
