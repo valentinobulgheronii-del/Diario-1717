@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { 
   Newspaper, 
   Sparkles, 
@@ -26,106 +28,40 @@ import {
   ArrowRight
 } from 'lucide-react';
 
+// Conexión a Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBFkiCIVm7dkP50HNgHgBul3zWGQDRs_4I",
+  authDomain: "diario-1717.firebaseapp.com",
+  projectId: "diario-1717",
+  storageBucket: "diario-1717.firebasestorage.app",
+  messagingSenderId: "60786063655",
+  appId: "1:60786063655:web:abf6c865d8039c69fe5102"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const INITIAL_ARTICLES = [
   {
     id: 'n1',
     category: 'nacional',
     categoryLabel: 'Política Nacional',
-    title: 'Debate en el Congreso por la Ley de Financiamiento Político y Reformas Electorales',
-    subtitle: 'El oficialismo busca dictamen mayoritario en comisiones mientras la oposición exige modificaciones estructurales a los topes de aportes corporativos.',
-    summary: 'La Cámara de Diputados inició un plenario de comisiones para tratar el proyecto de reforma al régimen de financiamiento de los partidos políticos y la legislación electoral.',
+    title: 'Cargando última edición de 1717...',
+    subtitle: 'Conectando con la base de datos de Firebase...',
+    summary: 'Si es la primera vez que ingresas, la aplicación está sincronizando las noticias del día generadas a las 7:00 AM.',
     imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80',
-    imageCaption: 'Sesión plenaria de las comisiones de Asuntos Constitucionales y Justicia en la Cámara de Diputados.',
+    imageCaption: 'Cargando información.',
     veracityScore: 98,
     sourcesCount: 5,
-    sources: [
-      { name: 'Infobae', url: '#' },
-      { name: 'La Nación', url: '#' },
-      { name: 'Página/12', url: '#' },
-      { name: 'Clarín', url: '#' }
-    ],
-    background: 'En las últimas dos décadas, el régimen de financiamiento electoral argentino (Ley 26.215) ha enfrentado críticas por la proliferación de rendiciones de cuentas opacas y aportes en efectivo difíciles de auditar.',
-    fullStory: 'Durante la jornada legislativa, el plenario de comisiones debatió el dictamen promovido por el oficialismo...\n\nPor su parte, los bloques opositores presentaron dictámenes de minoría...',
-    perspectives: 'Mientras la bancada oficialista sostiene que la bancarización total transparenta operaciones, la oposición argumenta que se amplía el margen de influencia del capital corporativo.',
-    analysis: 'El desenlace del debate en Diputados marcará la pauta del equilibrio de fuerzas políticas para el resto del año parlamentario.',
-    legalImpact: 'Reforma sustantiva del Código Electoral Nacional (Ley 19.945) y la Ley de Financiamiento Político (Ley 26.215).',
-    futureProjections: 'Se proyecta una votación ajustada en el recinto en las próximas dos semanas.',
+    sources: [{ name: '1717 Engine', url: '#' }],
+    background: 'Cargando antecedentes...',
+    fullStory: 'Sincronizando información en tiempo real...',
+    perspectives: 'Cargando análisis...',
+    analysis: 'Cargando...',
+    legalImpact: 'Cargando...',
+    futureProjections: 'Cargando...',
     date: '31 de Octubre, 2026',
-    readTime: '8 min'
-  },
-  {
-    id: 'j1',
-    category: 'jurisprudencia',
-    categoryLabel: 'Jurisprudencia y Fallos',
-    title: 'Corte Suprema fija nuevo precedente sobre responsabilidad de plataformas en protección de datos',
-    subtitle: 'El máximo tribunal dictó fallo de fondo reafirmando la doctrina de la intencionalidad y negligencia grave para la remoción de contenidos en buscadores.',
-    summary: 'En una sentencia unánime de alto valor institucional, la Corte Suprema de Justicia de la Nación delimitó el alcance del estándar de responsabilidad civil aplicable a los motores de búsqueda.',
-    imageUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80',
-    imageCaption: 'Fachada del Palacio de Justicia de la Nación, sede de la CSJN en Buenos Aires.',
-    veracityScore: 99,
-    sourcesCount: 6,
-    sources: [
-      { name: 'CIJ', url: '#' },
-      { name: 'La Ley', url: '#' },
-      { name: 'Diario Judicial', url: '#' }
-    ],
-    background: 'El litigio comenzó tras la demanda de una figura pública que solicitaba la desvinculación automática de su nombre de determinados sitios web.',
-    fullStory: 'La Corte confirmó el criterio de que los intermediarios de internet no son responsables subjetiva ni objetivamente por los contenidos generados por usuarios finales...',
-    perspectives: 'Organizaciones defensoras de la libertad de expresión celebraron el fallo, mientras que juristas especializados manifestaron reserva sobre el alto umbral exigido.',
-    analysis: 'Este fallo unifica la doctrina nacional con los precedentes fijados por la Corte IDH.',
-    legalImpact: 'Sienta jurisprudencia vinculante para los fueros Civil y Comercial Federal sobre notificación judicial previa.',
-    futureProjections: 'Inspirará proyectos de ley pendientes en el Congreso para codificar el régimen digital.',
-    date: '31 de Octubre, 2026',
-    readTime: '10 min'
-  },
-  {
-    id: 'i1',
-    category: 'internacional',
-    categoryLabel: 'Política Internacional',
-    title: 'El Acuerdo U.E. - Mercosur entra en su fase definitiva de ratificación e impacto comercial',
-    subtitle: 'Cancilleres latinoamericanos y delegados del bloque europeo sellan compromisos ambientales.',
-    summary: 'Tras extensas rondas de negociación técnica en Bruselas, las delegaciones diplomáticas acordaron la adenda complementaria sobre trazabilidad de la cadena de suministro.',
-    imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80',
-    imageCaption: 'Edificio Berlaymont, sede de la Comisión Europea en Bruselas.',
-    veracityScore: 96,
-    sourcesCount: 7,
-    sources: [
-      { name: 'Reuters', url: '#' },
-      { name: 'El País', url: '#' },
-      { name: 'Financial Times', url: '#' }
-    ],
-    background: 'Las negociaciones entre la Unión Europea y el Mercosur comenzaron formalmente en 1999.',
-    fullStory: 'El texto acordado incluye un mecanismo equitativo de compensación y asistencia técnica para los productores agroindustriales sudamericanos...',
-    perspectives: 'Francia mantiene reservas sobre el impacto en sus mercados agrarios, mientras que España, Brasil y Argentina lideran la presión política.',
-    analysis: 'El acuerdo refuerza el posicionamiento del Mercosur como proveedor estratégico global de alimentos y energía limpia.',
-    legalImpact: 'Tratado de Derecho Internacional Público que requiere ratificación del Parlamento Europeo y parlamentos del Mercosur.',
-    futureProjections: 'Se prevé la firma formal del instrumento en la próxima cumbre de Jefes de Estado.',
-    date: '31 de Octubre, 2026',
-    readTime: '9 min'
-  },
-  {
-    id: 't1',
-    category: 'tecnologia',
-    categoryLabel: 'Tecnología e Innovación',
-    title: 'EE.UU. y la Unión Europea establecen marco conjunto para la auditoría y transparencia de Algoritmos GenAI',
-    subtitle: 'El nuevo estándar internacional exige revelación de fuentes de datos y marcas de agua indelebles.',
-    summary: 'Los organismos de regulación digital de ambos continentes firmaron una resolución conjunta para homologar los requerimientos de seguridad y derechos de autor en IA.',
-    imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-    imageCaption: 'Redes neuronales e infraestructura de procesamiento de datos.',
-    veracityScore: 95,
-    sourcesCount: 5,
-    sources: [
-      { name: 'MIT Tech Review', url: '#' },
-      { name: 'Wired', url: '#' }
-    ],
-    background: 'El vertiginoso desarrollo de modelos de lenguaje impulsó disputas judiciales masivas planteadas por creadores de contenido.',
-    fullStory: 'El acuerdo ratificado impone que toda empresa desarrolladora de modelos fundacionales deberá presentar un expediente técnico detallado ante las autoridades regulatorias...',
-    perspectives: 'Desarrolladores advierten que esquemas muy restrictivos podrían ralentizar la innovación, mientras creadores celebran el equilibrio normativo.',
-    analysis: 'La norma crea el primer estándar global de facto en gobernanza algorítmica.',
-    legalImpact: 'Armonización internacional del derecho de Propiedad Intelectual y Gobernanza Global de Datos.',
-    futureProjections: 'Las primeras auditorías conjuntas a empresas tecnológicas comenzarán el próximo trimestre.',
-    date: '31 de Octubre, 2026',
-    readTime: '7 min'
+    readTime: '5 min'
   }
 ];
 
@@ -141,6 +77,28 @@ export default function App() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [savedOnlyView, setSavedOnlyView] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Cargar edición más reciente desde Firestore al abrir la web
+  useEffect(() => {
+    const fetchLatestEdition = async () => {
+      try {
+        const editionsRef = collection(db, 'editions');
+        const q = query(editionsRef, orderBy('date', 'desc'), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const latestDoc = querySnapshot.docs[0].data();
+          if (latestDoc.articles && latestDoc.articles.length > 0) {
+            setArticles(latestDoc.articles);
+          }
+        }
+      } catch (error) {
+        console.warn("No se pudo conectar con Firestore aún, mostrando noticias iniciales:", error);
+      }
+    };
+
+    fetchLatestEdition();
+  }, []);
 
   const handleSaveKey = (key) => {
     setApiKey(key);
@@ -165,7 +123,7 @@ export default function App() {
       const userQuery = `Genera 4 reportajes profundos en JSON para las categorías: 'nacional', 'internacional', 'jurisprudencia', 'tecnologia'.`;
 
       const effectiveKey = apiKey.trim();
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${effectiveKey}`;
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${effectiveKey}`;
 
       const payload = {
         contents: [{ parts: [{ text: userQuery }] }],
