@@ -3,7 +3,6 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { 
   Newspaper, 
-  Sparkles, 
   Bookmark, 
   BookmarkCheck, 
   Moon, 
@@ -18,7 +17,6 @@ import {
   ChevronRight, 
   Calendar, 
   Search, 
-  BookOpen, 
   X, 
   History, 
   TrendingUp, 
@@ -28,7 +26,6 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-// Conexión a Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBFkiCIVm7dkP50HNgHgBul3zWGQDRs_4I",
   authDomain: "diario-1717.firebaseapp.com",
@@ -41,44 +38,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const INITIAL_ARTICLES = [
-  {
-    id: 'n1',
-    category: 'nacional',
-    categoryLabel: 'Política Nacional',
-    title: 'Cargando última edición de 1717...',
-    subtitle: 'Conectando con la base de datos de Firebase...',
-    summary: 'Si es la primera vez que ingresas, la aplicación está sincronizando las noticias del día generadas a las 7:00 AM.',
-    imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80',
-    imageCaption: 'Cargando información.',
-    veracityScore: 98,
-    sourcesCount: 5,
-    sources: [{ name: '1717 Engine', url: '#' }],
-    background: 'Cargando antecedentes...',
-    fullStory: 'Sincronizando información en tiempo real...',
-    perspectives: 'Cargando análisis...',
-    analysis: 'Cargando...',
-    legalImpact: 'Cargando...',
-    futureProjections: 'Cargando...',
-    date: '31 de Octubre, 2026',
-    readTime: '5 min'
-  }
-];
-
 export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('1717_gemini_key') || '');
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [activeSection, setActiveSection] = useState('todas');
   const [savedArticles, setSavedArticles] = useState([]);
-  const [articles, setArticles] = useState(INITIAL_ARTICLES);
+  const [articles, setArticles] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [savedOnlyView, setSavedOnlyView] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Cargar edición más reciente desde Firestore al abrir la web
   useEffect(() => {
     const fetchLatestEdition = async () => {
       try {
@@ -93,7 +65,7 @@ export default function App() {
           }
         }
       } catch (error) {
-        console.warn("No se pudo conectar con Firestore aún, mostrando noticias iniciales:", error);
+        console.warn("Error cargando desde Firestore:", error);
       }
     };
 
@@ -101,8 +73,9 @@ export default function App() {
   }, []);
 
   const handleSaveKey = (key) => {
-    setApiKey(key);
-    localStorage.setItem('1717_gemini_key', key);
+    const cleanKey = key.trim();
+    setApiKey(cleanKey);
+    localStorage.setItem('1717_gemini_key', cleanKey);
     setShowKeyModal(false);
   };
 
@@ -115,12 +88,17 @@ export default function App() {
   };
 
   const handleGenerateEdition = async () => {
+    if (!apiKey) {
+      setShowKeyModal(true);
+      return;
+    }
+
     setIsGenerating(true);
-    setStatusMessage('Buscando y cruzando información en tiempo real...');
+    setStatusMessage('Buscando noticias en vivo y cruzando fuentes reales...');
 
     try {
-      const systemPrompt = `Eres el Editor General del diario '1717'. Redacta la edición diaria completa en JSON estructurado.`;
-      const userQuery = `Genera 4 reportajes profundos en JSON para las categorías: 'nacional', 'internacional', 'jurisprudencia', 'tecnologia'.`;
+      const systemPrompt = `Eres el Editor General del diario '1717'. Genera un informe periodístico extenso y profundo en JSON.`;
+      const userQuery = `Investiga las noticias más importantes de hoy en 'nacional', 'internacional', 'jurisprudencia' y 'tecnologia'. Incluye links de fuentes reales y un análisis largo (desarrollo completo de más de 600 palabras).`;
 
       const effectiveKey = apiKey.trim();
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${effectiveKey}`;
@@ -146,12 +124,12 @@ export default function App() {
         const parsed = JSON.parse(rawText);
         if (parsed.articles) {
           setArticles(parsed.articles);
-          setStatusMessage('¡Edición del día generada con éxito!');
+          setStatusMessage('¡La nueva edición se generó correctamente!');
         }
       }
     } catch (err) {
       console.error(err);
-      setStatusMessage('Error al generar la edición. Revisa tu API Key.');
+      setStatusMessage('Error al generar la edición. Revisa que tu API Key sea válida.');
     } finally {
       setIsGenerating(false);
       setTimeout(() => setStatusMessage(''), 5000);
@@ -274,7 +252,7 @@ export default function App() {
                 onClick={() => setSelectedArticle(filteredArticles[0])}
                 className="mt-4 text-xs font-bold text-amber-800 dark:text-amber-400 flex items-center gap-1"
               >
-                Leer informe completo <ChevronRight className="w-3 h-3" />
+                Leer informe completo y fuentes <ChevronRight className="w-3 h-3" />
               </button>
             </div>
           )}
@@ -304,29 +282,107 @@ export default function App() {
         </div>
       </main>
 
+      {/* Modal de Lectura Exhaustiva (Scrolleable con Rueda del Mouse) */}
       {selectedArticle && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 max-w-3xl w-full max-h-[85vh] overflow-y-auto rounded-lg p-6 relative text-zinc-900 dark:text-zinc-100">
-            <button onClick={() => setSelectedArticle(null)} className="absolute top-4 right-4 text-zinc-400">
-              <X className="w-5 h-5" />
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 max-w-4xl w-full max-h-[90vh] overflow-y-auto rounded-xl p-8 relative text-zinc-900 dark:text-zinc-100 shadow-2xl">
+            
+            <button 
+              onClick={() => setSelectedArticle(null)} 
+              className="absolute top-6 right-6 p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
+            >
+              <X className="w-6 h-6" />
             </button>
-            <span className="text-xs font-bold uppercase text-amber-700">{selectedArticle.categoryLabel}</span>
-            <h2 className="text-2xl font-serif font-bold mt-1">{selectedArticle.title}</h2>
+
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+              {selectedArticle.categoryLabel} • {selectedArticle.readTime || 'Lectura profunda'}
+            </span>
+
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold mt-2 leading-tight">
+              {selectedArticle.title}
+            </h2>
+            
+            <p className="mt-3 text-base font-serif italic text-zinc-600 dark:text-zinc-300">
+              "{selectedArticle.subtitle}"
+            </p>
+
             {selectedArticle.imageUrl && (
-              <img src={selectedArticle.imageUrl} alt="" className="w-full h-64 object-cover rounded my-4" />
+              <div className="my-6">
+                <img src={selectedArticle.imageUrl} alt="" className="w-full h-96 object-cover rounded-lg" />
+                {selectedArticle.imageCaption && (
+                  <p className="text-xs text-zinc-500 mt-2 italic">{selectedArticle.imageCaption}</p>
+                )}
+              </div>
             )}
-            <div className="space-y-4 text-sm leading-relaxed">
-              <p>{selectedArticle.fullStory || selectedArticle.summary}</p>
-              {selectedArticle.legalImpact && (
-                <div className="p-3 bg-amber-50 dark:bg-zinc-800 rounded border-l-2 border-amber-600 text-xs">
-                  <strong>Impacto Legal:</strong> {selectedArticle.legalImpact}
+
+            {/* Texto Largo e Integrado */}
+            <div className="space-y-6 text-base leading-relaxed text-zinc-800 dark:text-zinc-200 mt-6 border-t border-zinc-200 dark:border-zinc-800 pt-6 font-sans">
+              
+              {selectedArticle.background && (
+                <div>
+                  <h4 className="text-sm font-bold uppercase text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+                    <History className="w-4 h-4" /> Antecedentes y Contexto
+                  </h4>
+                  <p className="text-zinc-700 dark:text-zinc-300">{selectedArticle.background}</p>
                 </div>
               )}
+
+              <div>
+                <h4 className="text-sm font-bold uppercase text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+                  <FileText className="w-4 h-4" /> Desarrollo Completo del Problema
+                </h4>
+                <div className="whitespace-pre-line space-y-4">
+                  {selectedArticle.fullStory || selectedArticle.summary}
+                </div>
+              </div>
+
+              {selectedArticle.perspectives && (
+                <div>
+                  <h4 className="text-sm font-bold uppercase text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+                    <Layers className="w-4 h-4" /> Posturas y Debates
+                  </h4>
+                  <p className="text-zinc-700 dark:text-zinc-300">{selectedArticle.perspectives}</p>
+                </div>
+              )}
+
+              {selectedArticle.legalImpact && (
+                <div className="p-4 bg-amber-50 dark:bg-zinc-800/60 rounded-lg border-l-4 border-amber-600 text-sm">
+                  <strong className="block text-amber-900 dark:text-amber-300 mb-1 flex items-center gap-1.5">
+                    <Scale className="w-4 h-4" /> Encuadre Normativo e Impacto Legal:
+                  </strong>
+                  {selectedArticle.legalImpact}
+                </div>
+              )}
+
+              {/* Fuentes con Links Reales Cliqueables */}
+              {selectedArticle.sources && selectedArticle.sources.length > 0 && (
+                <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4 mt-6">
+                  <h4 className="text-xs font-bold uppercase text-zinc-500 mb-3 flex items-center gap-1">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" /> Fuentes de las que se extrajo la información:
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedArticle.sources.map((src, index) => (
+                      <a
+                        key={index}
+                        href={src.url || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-amber-800 dark:text-amber-400 hover:underline font-medium border border-zinc-200 dark:border-zinc-700"
+                      >
+                        {src.name}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
       )}
 
+      {/* Modal de API Key */}
       {showKeyModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 max-w-md w-full p-6 rounded-lg relative">
@@ -334,12 +390,13 @@ export default function App() {
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-base font-serif font-bold mb-2">Ingresar Gemini API Key</h3>
+            <p className="text-xs text-zinc-500 mb-4">Pega tu clave (sin espacios) para consultar en vivo.</p>
             <input 
               type="password" 
               placeholder="AIzaSy..." 
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="w-full p-2 text-xs border rounded bg-transparent mb-4"
+              className="w-full p-2 text-xs border rounded bg-transparent mb-4 font-mono"
             />
             <button 
               onClick={() => handleSaveKey(apiKey)}
