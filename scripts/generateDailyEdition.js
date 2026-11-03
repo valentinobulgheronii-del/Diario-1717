@@ -47,9 +47,9 @@ const CATEGORIES = [
 ];
 
 async function fetchArticleForCategory(categoryObj, todayStr) {
-  // CORRECCIÓN: Se usa gemini-1.5-pro-latest
+  // CORRECCIÓN: Volvemos al modelo flash que no tira 404 en cuentas gratuitas
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-pro-latest",
+    model: "gemini-1.5-flash",
     tools: [{ googleSearch: {} }]
   });
 
@@ -87,7 +87,7 @@ Devuelve ÚNICAMENTE un JSON válido con esta estructura:
   while (attempts < 3) {
     try {
       attempts++;
-      console.log(`[${categoryObj.id.toUpperCase()}] Consultando Gemini 1.5 PRO + Search (Intento ${attempts})...`);
+      console.log(`[${categoryObj.id.toUpperCase()}] Consultando Gemini 1.5 Flash + Search (Intento ${attempts})...`);
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -128,8 +128,8 @@ async function generateDailyEdition() {
       console.log(`-> Categoría '${cat.id}' completada.`);
     }
 
-    console.log(`Pausando 35 segundos para liberar cuota PRO...`);
-    await sleep(35000);
+    console.log(`Pausando 25 segundos para evitar límite de cuota...`);
+    await sleep(25000);
   }
 
   if (compiledArticles.length === 0) {
