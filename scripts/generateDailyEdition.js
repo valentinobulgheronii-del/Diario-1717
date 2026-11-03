@@ -47,9 +47,9 @@ const CATEGORIES = [
 ];
 
 async function fetchArticleForCategory(categoryObj, todayStr) {
-  // Usamos el modelo PRO para garantizar análisis real y links verdaderos
+  // CORRECCIÓN: Se usa gemini-1.5-pro-latest
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-pro",
+    model: "gemini-1.5-pro-latest",
     tools: [{ googleSearch: {} }]
   });
 
@@ -115,7 +115,6 @@ async function generateDailyEdition() {
     let article = await fetchArticleForCategory(cat, todayStr);
     
     if (article) {
-      // Reemplazo de seguridad solo si el modelo no pudo encontrar la foto original
       if (article.imageUrl === "USE_DEFAULT" || !article.imageUrl.startsWith("http")) {
         const fallbacks = {
           nacional: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80",
@@ -129,7 +128,6 @@ async function generateDailyEdition() {
       console.log(`-> Categoría '${cat.id}' completada.`);
     }
 
-    // Pausa estricta de 35 segundos para respetar la cuota del modelo PRO (2 peticiones por minuto)
     console.log(`Pausando 35 segundos para liberar cuota PRO...`);
     await sleep(35000);
   }
