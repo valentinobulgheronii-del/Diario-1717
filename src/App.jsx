@@ -5,7 +5,7 @@ const handleGenerateEdition = async () => {
     }
 
     setIsGenerating(true);
-    setStatusMessage('Buscando noticias reales e imágenes con Google Search (PRO)...');
+    setStatusMessage('Buscando noticias reales e imágenes con Google Search (Flash)...');
 
     try {
       const systemPrompt = `Eres el Editor General del diario '1717'. Genera un informe periodístico extenso en JSON. NO inventes URLs. Usa exclusivamente enlaces y URLs de imágenes reales que encuentres.`;
@@ -39,8 +39,8 @@ const handleGenerateEdition = async () => {
       }`;
 
       const effectiveKey = apiKey.trim();
-      // Endpoint corregido con el modelo PRO latest
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${effectiveKey}`;
+      // Endpoint corregido con el modelo FLASH para evitar el error 404 en cuentas gratuitas
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveKey}`;
 
       const payload = {
         contents: [{ parts: [{ text: userQuery }] }],
