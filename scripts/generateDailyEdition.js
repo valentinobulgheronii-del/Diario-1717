@@ -47,9 +47,9 @@ const CATEGORIES = [
 ];
 
 async function fetchArticleForCategory(categoryObj, todayStr) {
-  // CORRECCIÓN: Volvemos al modelo flash que no tira 404 en cuentas gratuitas
+  // CORRECCIÓN: Agregamos -latest para que Google encuentre el modelo
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash",
+    model: "gemini-1.5-flash-latest",
     tools: [{ googleSearch: {} }]
   });
 
@@ -87,7 +87,7 @@ Devuelve ÚNICAMENTE un JSON válido con esta estructura:
   while (attempts < 3) {
     try {
       attempts++;
-      console.log(`[${categoryObj.id.toUpperCase()}] Consultando Gemini 1.5 Flash + Search (Intento ${attempts})...`);
+      console.log(`[${categoryObj.id.toUpperCase()}] Consultando Gemini 1.5 Flash Latest + Search (Intento ${attempts})...`);
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
